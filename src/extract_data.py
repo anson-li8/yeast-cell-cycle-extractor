@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -28,7 +29,7 @@ def process_expression_data(
     df_filtered = df[df["Gene_Symbol"].isin(target_genes)].copy()
     # set 'Gene_Symbol' as index and keep only needed columns
     df_filtered.set_index("Gene_Symbol", inplace=True)
-    df_filtered = df_filetered.drop(columns=cols_to_drop, errors="ignore")
+    df_filtered = df_filtered.drop(columns=cols_to_drop, errors="ignore")
     # convert rest of columns to numeric, errors -> NaN
     df_numeric = df_filtered.apply(pd.to_numeric, errors="coerce")
     # handle missing values
@@ -41,7 +42,8 @@ def process_expression_data(
     # use threshold rule where 1 if value > mean for the the gene
     row_means = df_complete.mean(axis=1)
     # apply binarization formula
-    df_binary = df_complete.apply(lambda row: (row > row_menas[row.name]).astype(int), axis=1)
+    df_binary = df_complete.apply(lambda row: (
+        row > row_means[row.name]).astype(int), axis=1)
     # maek sure parent output directory exists before saving
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     # Save output
