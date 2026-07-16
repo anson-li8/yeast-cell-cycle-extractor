@@ -24,6 +24,9 @@ def process_expression_data(
     df = pd.read_csv(input_file_path, sep="\t", skiprows=0)
     # clean column names by stripping whitespaces
     df.columns = df.columns.str.strip()
+    # drop spacer columns
+    unnamed_cols = [c for c in df.columns if str(c).startswith("Unnamed")]
+    df = df.drop(columns=unnamed_cols, errors="ignore")
     # extract gene symbols then filter dataframe to only keep target genes
     df["Gene_Symbol"] = df["NAME"].apply(extract_gene_symbol)
     df_filtered = df[df["Gene_Symbol"].isin(target_genes)].copy()
