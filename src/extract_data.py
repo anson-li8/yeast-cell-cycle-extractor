@@ -21,7 +21,16 @@ def process_expression_data(
     if cols_to_drop is None:
         cols_to_drop = ["YORF", "NAME", "GWEIGHT"]
     print(f" Reading raw data from: {input_file_path}")
-    df = pd.read_csv(input_file_path, sep="\t", skiprows=0)
+    # Read and stitch lines broken by accidental newlines
+    with open(input_file_path, "r", encoding="utf-8", errors="ignore") as f:
+        lines = []
+        for line in f:
+            if lines and len(lines[-1].split("\t")) < 503:
+                lines[-1] = lines[-1].strip() + "\t" + line.strip()
+            else:
+                lines.append(line.strip())
+    df = pd.DataFrame([l.split("\t")
+                      for l in lines[1:]], columns=lines[0].split("\t"))
     # clean column names by stripping whitespaces
     df.columns = df.columns.str.strip()
     # drop spacer columns
@@ -47,6 +56,9 @@ def process_expression_data(
     # apply binarization formula
     df_binary = df_complete.apply(lambda row: (
         row > row_means[row.name]).astype(int), axis=1)
+    # test
+    # print(df_binary.sum(axis=1))
+    # print(list(df_complete.columns))
     # maek sure parent output directory exists before saving
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     # Save output
@@ -67,7 +79,6 @@ if __name__ == "__main__":
     # allow command line overrides for reproductibility
     parser = argparse.ArgumentParser(
         description="Clean and binarize genomic microarray datasets.")
-    parser.add_name = "Yeast Extractor"
     parser.add_argument("--input", type=str, default=str(DEFAULT_INPUT),
                         help="Path to input raw data file")
     parser.add_argument("--output", type=str, default=str(DEFAULT_OUTPUT),
